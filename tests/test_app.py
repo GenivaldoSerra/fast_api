@@ -56,6 +56,16 @@ def test_update_user(client):
     }
 
 
+def test_read_user_id(client):
+    response = client.get('/users/1')
+
+    assert response.json() == {
+        'id': 1,
+        'username': 'testeuser',
+        'email': 'teste1@test.com',
+    }
+
+
 def test_delete_user(client):
     response = client.delete('/users/1')
 
