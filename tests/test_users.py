@@ -55,6 +55,21 @@ def test_update_user(client, user, token):
     }
 
 
+def test_update_wrong_user(client, user, token):
+    response = client.put(
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'username': 'testeuser',
+            'email': 'teste1@test.com',
+            'password': 'password1',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permission'}
+
+
 def test_delete_user(client, user, token):
     response = client.delete(
         f'/users/{user.id}',
@@ -62,3 +77,13 @@ def test_delete_user(client, user, token):
     )
 
     assert response.json() == {'message': 'Usuário deletado!'}
+
+
+def test_delete_wrong_user(client, user, token):
+    response = client.delete(
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permission'}

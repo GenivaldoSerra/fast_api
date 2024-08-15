@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -10,12 +11,14 @@ from fast_api.schemas import Message, UserList, UserPublic, UserSchema
 from fast_api.security import get_current_user, get_password_hash
 
 router = APIRouter(prefix='/users', tags=['users'])
+T_Session = Annotated[Session, Depends(get_session)]
+T_CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post('/', response_model=UserPublic, status_code=HTTPStatus.CREATED)
 def create_user(
     user: UserSchema,
-    session: Session = Depends(get_session),
+    session: T_Session,
 ):
     db_user = session.scalar(
         select(User).where(
@@ -49,9 +52,9 @@ def create_user(
 
 @router.get('/', response_model=UserList)
 def read_users(
+    session: T_Session,
     limit: int = 10,
     skip: int = 0,
-    session: Session = Depends(get_session),
     # current_user=Depends(get_current_user),
 ):
     user = session.scalars(select(User).limit(limit).offset(skip))
@@ -59,7 +62,7 @@ def read_users(
 
 
 @router.get('/{user_id}', response_model=UserPublic)
-def read_users_id(user_id: int, session: Session = Depends(get_session)):
+def read_users_id(user_id: int, session: T_Session):
     db_user = session.scalar(select(User).where(User.id == user_id))
 
     if not db_user:
@@ -74,12 +77,12 @@ def read_users_id(user_id: int, session: Session = Depends(get_session)):
 def update_user(
     user_id: int,
     user: UserSchema,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    session: T_Session,
+    current_user: T_CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='Not enough permission'
+            status_code=HTTPStatus.FORBIDDEN, detail='Not enough permission'
         )
 
     current_user.username = user.username
@@ -95,12 +98,12 @@ def update_user(
 @router.delete('/{user_id}', response_model=Message)
 def delete_user(
     user_id: int,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    session: T_Session,
+    current_user: T_CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='Not enough permission'
+            status_code=HTTPStatus.FORBIDDEN, detail='Not enough permission'
         )
 
     session.delete(current_user)
