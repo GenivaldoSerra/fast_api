@@ -15,7 +15,7 @@ from fast_api.models import User
 from fast_api.schemas import TokenData
 
 pwd_context = PasswordHash.recommended()
-oauth2_shema = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_shema = OAuth2PasswordBearer(tokenUrl='/auth/token')
 
 SECRET_KEY = '123456'
 ALGORITHM = 'HS256'
